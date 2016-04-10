@@ -8,6 +8,9 @@ api_version: 1
 threadsafe: yes
 version: 1
 application: my-recipe-tracker
+libraries:
+- name: setuptools
+  version: "0.6c11"
 
 # Handlers define how to route requests to your application.
 handlers:
