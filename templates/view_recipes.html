@@ -1,0 +1,10 @@
+{% block content %}
+<ul>
+    {% for recipe in recipes %}
+    <li>{{ recipe.name }}</li>
+    <li>{{ recipe.ingredients }}</li>
+    <li>{{ recipe.instructions }}</li>
+    <li>{{ recipe }}</li>
+    {% endfor %}
+</ul>
+{% endblock %}
