@@ -1,6 +1,6 @@
 import time
 from flask import Flask
-from flask import render_template, redirect
+from flask import render_template, redirect, request
 from flaskext import wtf
 from flaskext.wtf import validators
 from google.appengine.ext import db
@@ -38,14 +38,44 @@ def new():
         print "Recipe saved."
         return redirect('/all')
     return render_template('add_recipe.html', form=form)
-    
-# @app.route('/add', methods=['POST'])
-# def add():
-#     return ""
 
-# @app.route('/edit', methods['POST'])
-# def edit():
-#     return ""
+@app.route('/edit', methods=['GET','POST'])
+def edit():
+    key = request.args.get('key')
+    recipe = Recipe.get(key)
+    form = RecipeForm()
+    if request.method == 'GET':
+        print key
+        recipe = Recipe.get(key)
+        print recipe
+        if recipe:
+            form.name.data = recipe.name
+            form.under30.data = recipe.under30
+            form.category.data = recipe.category
+            form.ingredients.data = recipe.ingredients
+            form.instructions.data = recipe.instructions
+            form.key = recipe.key()
+    elif form.validate_on_submit():
+        recipe.name = form.name.data
+        recipe.under30 = form.under30.data
+        recipe.category = form.category.data
+        recipe.ingredients = form.ingredients.data
+        recipe.instructions = form.instructions.data
+        recipe.put()
+        print "Recipe edited."
+        time.sleep(1)
+        return redirect('/all')
+    return render_template('edit_recipes.html', recipe=recipe, form=form)        
+
+@app.route('/delete', methods=['GET'])
+def add():
+    key = request.args.get('key')
+    print 'deleting key %s' % key
+    recipe = Recipe.get(key)
+    recipe.delete()
+    time.sleep(1)
+    return redirect('/all')
+
 
 @app.route('/all', methods=['GET'])
 def all():

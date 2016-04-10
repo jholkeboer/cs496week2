@@ -1,10 +1,17 @@
+<script>
+    window.location.reload
+</script>
+
 {% block content %}
 <ul>
     {% for recipe in recipes %}
     <li>{{ recipe.name }}</li>
     <li>{{ recipe.ingredients }}</li>
     <li>{{ recipe.instructions }}</li>
-    <li>{{ recipe }}</li>
+    <li>{{ recipe.key() }}</li>
+    <a href="edit?key={{recipe.key()}}">Edit</a>
+    <a href="delete?key={{recipe.key()}}">Delete</a>
+    <br>
     {% endfor %}
 </ul>
 {% endblock %}

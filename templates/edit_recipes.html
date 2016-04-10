@@ -1,0 +1,38 @@
+{% block content %}
+<h1> Edit an existing recipe </h1>
+{% if recipe %}
+<form action="/edit?key={{ form.key }}"" method="post" accept-charset="utf-8">
+    {{ form.csrf_token }}
+    <p>
+        Recipe name: {{ form.name }}
+    </p>
+    <p>
+        Can it be made in under 30 minutes? {{ form.under30 }}
+    </p>
+    <p>
+        Recipe category:  {{ form.category }}
+    </p>
+    <p>
+        Recipe ingredients: {{ form.ingredients }}
+    </p>
+    <p>
+        Recipe instructions: {{ form.instructions }}
+    </p>
+    <p>
+        <input type="submit" value="Save">
+    </p>
+</form>
+{% endif %}
+
+
+{% if form.content %}
+{% if form.content.errors %}
+<ul>
+    {% for error in form.content.errors %}
+    <li> {{error}} </li>
+    {% endfor %}
+</ul>
+{% endif %}
+{% endif %}
+
+{% endblock %}
