@@ -16,7 +16,7 @@ app.CSRF_SESSION_LKEY='unsafe'
 class RecipeForm(wtf.Form):
     name = wtf.TextField('Name')
     under30 = wtf.BooleanField('Under 30 minutes to make?')
-    category = wtf.TextField('Category')
+    category = wtf.RadioField('Category', choices=[('breakfast','Breakfast'),('lunch','Lunch'),('dinner','Dinner')])
     ingredients = wtf.TextAreaField('Ingredients')
     instructions = wtf.TextAreaField('Instructions')
 
