@@ -1,6 +1,8 @@
 {% block content %}
+<a href="all">View Recipes</a> | <a href="new">Add Recipe</a>
 <h1> Edit an existing recipe </h1>
 {% if recipe %}
+
 <form action="/edit?key={{ form.key }}"" method="post" accept-charset="utf-8">
     {{ form.csrf_token }}
     <p>
@@ -33,6 +35,22 @@
     {% endfor %}
 </ul>
 {% endif %}
+
 {% endif %}
 
 {% endblock %}
+<script>
+    function changeCategory(category) {
+        var id;
+        if (category == 'breakfast') {
+            id = 'category-0';
+        } else if (category == 'lunch') {
+            id = 'category-1';
+        } else if (category == 'dinner') {
+            id = 'category-2';
+        }
+        console.log(id);
+        document.getElementById(id).checked = true;
+    }
+    changeCategory('{{ category }}');
+</script>

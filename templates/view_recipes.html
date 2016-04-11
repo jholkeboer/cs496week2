@@ -1,17 +1,18 @@
 <script>
     window.location.reload
 </script>
-
+<a href="all">View Recipes</a> | <a href="new">Add Recipe</a>
 {% block content %}
 <ul>
     {% for recipe in recipes %}
-    <li>{{ recipe.name }}</li>
-    <li>{{ recipe.ingredients }}</li>
-    <li>{{ recipe.instructions }}</li>
+    <li>Name: {{ recipe.name }}</li>
+    <li>Category: {{ recipe.category }}</li>
+    <li>Ingredients: {{ recipe.ingredients }}</li>
+    <li>Instructions: {{ recipe.instructions }}</li>
     <li>{{ recipe.key() }}</li>
     <a href="edit?key={{recipe.key()}}">Edit</a>
     <a href="delete?key={{recipe.key()}}">Delete</a>
-    <br>
+    <br><br>
     {% endfor %}
 </ul>
 {% endblock %}

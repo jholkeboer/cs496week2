@@ -36,6 +36,7 @@ def new():
                         instructions = form.instructions.data)
         recipe.put()
         print "Recipe saved."
+        time.sleep(1)
         return redirect('/all')
     return render_template('add_recipe.html', form=form)
 
@@ -44,14 +45,14 @@ def edit():
     key = request.args.get('key')
     recipe = Recipe.get(key)
     form = RecipeForm()
+    category = str(recipe.category)
+    print category
     if request.method == 'GET':
-        print key
         recipe = Recipe.get(key)
-        print recipe
         if recipe:
             form.name.data = recipe.name
             form.under30.data = recipe.under30
-            form.category.data = recipe.category
+            # form.category.default = recipe.category
             form.ingredients.data = recipe.ingredients
             form.instructions.data = recipe.instructions
             form.key = recipe.key()
@@ -65,7 +66,7 @@ def edit():
         print "Recipe edited."
         time.sleep(1)
         return redirect('/all')
-    return render_template('edit_recipes.html', recipe=recipe, form=form)        
+    return render_template('edit_recipes.html', recipe=recipe, form=form, category=category)        
 
 @app.route('/delete', methods=['GET'])
 def add():
