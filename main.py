@@ -83,6 +83,10 @@ def add():
 def all():
     # recipes = Recipe.all()
     recipes = db.GqlQuery("SELECT * FROM Recipe")
+    
+    for r in recipes:
+        for i in r.ingredients:
+            print i
 
     return render_template('view_recipes.html', recipes=recipes)
 
@@ -192,3 +196,53 @@ def api_view_recipes_for_ingredient():
         recipe_list.append(str(r.key()))
     
     return json.dumps({'status': 'OK', 'recipeList': recipe_list}), 200
+
+@app.route('/api_add_ingredient_to_recipe', methods=['PUT'])  
+def api_rename_recipe():
+    # associates an ingredient with a recipe
+    recipe_key = request.args.get('recipe')
+    ingredient_key = request.args.get('ingredient')
+    
+    recipe = Recipe.get(recipe_key)
+    print recipe.ingredients
+    
+    if not recipe:
+        return json.dumps({'error': 'Recipe not found'}), 500
+    
+    ingredient = Ingredient.get(ingredient_key)
+    if not ingredient:
+        return json.dumps({'error': 'Ingredient not found.'}), 500
+    
+    if ingredient.key() in recipe.ingredients:
+        return json.dumps({'status': 'Ingredient already in recipe.'}), 200
+    
+    # if the ingredient is not already associated, associate it
+    recipe.ingredients.append(ingredient.key())
+    recipe.put()
+    
+    # add the recipe to the ingredient's list of recipes that use it
+    if recipe.key() not in ingredient.usedIn:
+        ingredient.usedIn.append(recipe.key())
+        ingredient.put()
+    
+    return json.dumps({'status': 'Associated ingredient and recipe successfully'}), 200
+
+@app.route('/api_delete_recipe', methods=['DELETE'])
+def api_delete_recipe():
+    # deletes a recipe from the datastore    
+    key = request.args.get('recipe')
+    print 'deleting key %s' % key
+    recipe = Recipe.get(key)
+    
+    if not recipe:
+        return json.dumps({'error': 'Attempted to delete recipe that does not exist'}), 200
+    
+    recipe.delete()
+    
+    # remove recipe from 'usedIn' property of ingredients
+    ingredients = db.GqlQuery("SELECT * FROM Ingredient WHERE usedIn = :1", recipe.key())
+    for i in ingredients:
+        i.usedIn.remove(recipe.key())
+        i.put()
+    
+    return json.dumps({'status': 'Deleted successfully'}), 200

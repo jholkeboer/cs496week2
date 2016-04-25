@@ -6,7 +6,7 @@
 <ul>
     {% if recipes %}
         {% for recipe in recipes %}
-        <li>Name: {{ recipe.name }}</li>
+        <li>Name: {{ recipe.name }} {{ recipe.key() }}</li>
         <li>Category: {{ recipe.category }}</li>
         <li>Prep Time: {{ recipe.prepTime }}</li>
         <li>Ingredients: {{ recipe.ingredients }}</li>
