@@ -23,7 +23,7 @@ class RecipeForm(wtf.Form):
 
 @app.route('/')
 def hello():
-    return 'Hello Cloud! The current time is: %s' % time.strftime("%I:%M:%S")
+    return redirect('/all')
 
 @app.route('/new', methods=['GET', 'POST'])
 def new():
@@ -40,6 +40,32 @@ def new():
         return redirect('/all')
     return render_template('add_recipe.html', form=form)
 
+@app.route('/api_new_recipe', methods=['POST'])
+def api_new_recipe():
+    print request.form
+    print request.args
+    # print request.get_json()
+    print request.form.get('name')
+    print request.args.get('prepTime')
+    print request.args.get('category')
+    print request.args.get('ingredients')
+    print request.args.get('instructions')
+    
+    # get ingredient keys
+    # ings = db.GqlQuery("SELECT * FROM Ingredient WHERE name=%s" % request.name)
+    # print ings
+    # result_count = 0
+    # for i in ings:
+    #     result_count += 1
+    # print result_count
+    # if result_count == 0:
+        
+    # # find recipes that use it
+    # usedIn = 
+    # ingredient = Ingredient(name=request.name)
+    
+    return "Recipe Saved", 200
+
 @app.route('/edit', methods=['GET','POST'])
 def edit():
     key = request.args.get('key')
@@ -53,7 +79,7 @@ def edit():
             form.name.data = recipe.name
             form.under30.data = recipe.under30
             # form.category.default = recipe.category
-            form.ingredients.data = recipe.ingredients
+            # form.ingredients.data = recipe.ingredients
             form.instructions.data = recipe.instructions
             form.key = recipe.key()
     elif form.validate_on_submit():
@@ -82,8 +108,7 @@ def add():
 def all():
     # recipes = Recipe.all()
     recipes = db.GqlQuery("SELECT * FROM Recipe")
-    for r in recipes:
-        print r
+
     return render_template('view_recipes.html', recipes=recipes)
 
 @app.errorhandler(404)
