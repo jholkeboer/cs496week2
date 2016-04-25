@@ -6,8 +6,8 @@ class Recipe(db.Model):
     name = db.StringProperty(required=True)
     prepTime = db.IntegerProperty(required=True)
     category = db.TextProperty(required=True)
-    ingredients = db.ListProperty(db.Key, required=True)
-    instructions = db.TextProperty(required=True)
+    ingredients = db.ListProperty(db.Key)
+    instructions = db.StringListProperty(required=True)
 
 class Ingredient(db.Model):
     name = db.StringProperty(required=True)

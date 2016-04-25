@@ -1,4 +1,5 @@
 import time
+import json
 from flask import Flask
 from flask import render_template, redirect, request
 from flaskext import wtf
@@ -6,7 +7,7 @@ from flaskext.wtf import validators
 from google.appengine.ext import db
 from flaskext import wtf
 from flaskext.wtf import validators
-from models import Recipe
+from models import Recipe, Ingredient
 app = Flask(__name__)
 app.secret_key='unsafe'
 app.DEBUG=True
@@ -39,32 +40,6 @@ def new():
         time.sleep(1)
         return redirect('/all')
     return render_template('add_recipe.html', form=form)
-
-@app.route('/api_new_recipe', methods=['POST'])
-def api_new_recipe():
-    print request.form
-    print request.args
-    # print request.get_json()
-    print request.form.get('name')
-    print request.args.get('prepTime')
-    print request.args.get('category')
-    print request.args.get('ingredients')
-    print request.args.get('instructions')
-    
-    # get ingredient keys
-    # ings = db.GqlQuery("SELECT * FROM Ingredient WHERE name=%s" % request.name)
-    # print ings
-    # result_count = 0
-    # for i in ings:
-    #     result_count += 1
-    # print result_count
-    # if result_count == 0:
-        
-    # # find recipes that use it
-    # usedIn = 
-    # ingredient = Ingredient(name=request.name)
-    
-    return "Recipe Saved", 200
 
 @app.route('/edit', methods=['GET','POST'])
 def edit():
@@ -119,3 +94,101 @@ def page_not_found(e):
 @app.errorhandler(500)
 def application_error(e):
     return 'Error: {}'.format(e), 500
+
+#####################################
+# API ROUTES FOR ASSIGNMENT 3 PART 2
+#####################################
+
+@app.route('/api_new_recipe', methods=['POST'])
+def api_new_recipe():
+    print request.args.get('name')
+    print request.args.get('prepTime')
+    print request.args.get('category')
+    print request.args.get('ingredients')
+    print request.args.get('instructions')
+    
+    recipeName = request.args.get('name')
+    prepTime = request.args.get('prepTime')
+    category = request.args.get('category')
+    ingredientList = request.args.get('ingredients').split(',')
+    ingredientList = [x.lower() for x in ingredientList]
+    instructionList = request.args.get('instructions').split(',')
+
+    print instructionList    
+    print ingredientList
+    
+    # error handling
+    if prepTime.isdigit():
+        prepTime = int(prepTime)
+        if prepTime <= 0:
+            return json.dumps({"error": "Invalid prep time"}), 500
+    else:
+        return json.dumps({"error": "Invalid prep time"}), 500
+        
+    if category not in ['breakfast', 'lunch', 'dinner']:
+        return json.dumps({"error": "Invalid category.  Valid categories are breakfast, lunch, and dinner"}), 500
+
+    if len(ingredientList) < 1:
+        return json.dumps({"error": "Need at least one ingredient"}), 500
+
+    if len(instructionList) < 1:
+        return json.dumps({"error": "Need at least one instruction"}), 500
+    
+    # get ingredient keys
+    ingredient_keys = []
+    new_ingredients = []
+    for ingName in ingredientList:
+        ings = db.GqlQuery("SELECT * FROM Ingredient WHERE name = :1", ingName)
+        result_count = 0
+        for item in ings:
+            result_count += 1
+            ingredient_keys.append(item.key())
+        if result_count == 0:
+            new_ingredients.append(ingName)
+   
+    newRecipe = Recipe(name = recipeName,
+                    prepTime = prepTime,
+                    category = category,
+                    ingredients = [],
+                    instructions = instructionList) 
+    newRecipe.put()
+    recipeKey = newRecipe.key()
+    
+    # create new ingredients if necessary
+    for n in new_ingredients:
+        newIngredient = Ingredient(name=n, usedIn=[recipeKey])
+        newIngredient.put()
+        ingredient_keys.append(newIngredient.key())
+    newRecipe.ingredients = ingredient_keys
+    
+    newRecipe.put()
+    
+    return "Recipe Saved", 200
+
+@app.route('/api_view_recipes_for_ingredient', methods=['GET'])
+def api_view_recipes_for_ingredient():
+    # returns the list of Recipe keys which include the given ingredient name
+    ingredientName = request.args.get('ingredientName')
+    if not ingredientName:
+        return json.dumps({'error': "Invalid request parameter."}), 500
+    
+    # see if the ingredient exists in the database
+    ingredient = db.GqlQuery("SELECT * FROM Ingredient WHERE name = :1", ingredientName)
+    result_count = 0
+    for item in ingredient:
+        result_count += 1
+        ingredient_key = item.key()
+        print ingredient_key
+    if not ingredient_key:
+        return json.dumps({'error': "Ingredient not found"}), 500
+
+    # look up recipes that contain that ingredient
+    recipe_count = 0
+    recipe_list = []
+    recipes = db.GqlQuery("SELECT * FROM Recipe WHERE ingredients = :1", ingredient_key)
+    for r in recipes:
+        recipe_count += 1
+        print r
+        recipe_list.append(str(r.key()))
+    
+    return json.dumps({'status': 'OK', 'recipeList': recipe_list}), 200
