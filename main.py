@@ -40,7 +40,7 @@ factual = Factual(api_key, api_secret)
 # route to hit Factual api
 # based on Factual documentation: https://github.com/Factual/factual-python-driver
 @app.route('/mobile/factual')
-def factual_restaurants:
+def factual_restaurants():
     if not request.args.get('latitude') or not request.args.get('longitude'):
         return json.dumps({"error": "No location provided"}), 500
     if not request.args.get('search_term'):
