@@ -1,9 +1,9 @@
 <head>
   <!-- Jquery mobile inclusions, as seen on http://www.w3schools.com/jquerymobile/tryit.asp?filename=tryjqmob_example -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css">
-  <script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
-  <script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+  <link rel="stylesheet" href="//code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css">
+  <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+  <script src="//code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
 </head>
 <body>
   <div data-role="page">
@@ -13,37 +13,137 @@
     </div>
     
     <div data-role="content">
-      This app uses the <a href="http://www.factual.com">Factual</a> API to find restaurants near your location.
-      <div id="error-msg">
-        
+      This app uses the <a href="//www.factual.com">Factual</a> API to find restaurants near your location.
+      <div id="location-error-msg" style="display:none">
+        <p>
+          Sorry, we could not find your location.  Either you did not give permission, or your browser does not have location support.
+        </p>
       </div>
       
-      <div id="search-form" style="visibility:visible">
-        <form action="/mobile/factual" method="post">
+      <div id="location-pending-msg" style="display:none">
+        <p>
+          Getting your location...
+        </p>
+      </div>
+      
+      <div id="validation-error-msg" style="display:none">
+        <p>
+          Sorry, your search term contained invalid characters. Please use letters only.
+        </p>
+      </div>
+      
+      <div id="search-form" style="display:none">
+        <form>
           <div data-role="fieldcontain">
             <label for="name">What kind of food are you looking for?</label> 
-            <input type="text" name="search-term" value=""/>
+            <input id="search-term" type="text" name="search-term"/>
           </div>
-          <input type="hidden" name="latitude" value=""/>
-          <input type="hidden" name="longitude" value=""/>
+          <input id="latitude-field" type="hidden" name="latitude"/>
+          <input id="longitude-field" type="hidden" name="longitude"/>
           <div class="ui-body">
             <fieldset class="ui-grid-a">
-              <div class="ui-block-b"><button type="submit" data-theme="a">Submit</button></div>
+              <div class="ui-block-b"><button id="submit" type="submit" data-theme="a">Submit</button></div>
             </fieldset>
           </div>
         </form>
       </div>
-    </div>
-    
-    
+      
+      <div id="none-found-error-msg" style="display:none">
+        <p>
+          No restaurants found for that search term within 1000 meters of your location.
+        </p>
+      </div>
+      
+      <div id="search-results">
+        <ul id="result-list" data-role="listview">
+          <!-- SEARCH RESULTS GO HERE -->
+        </ul>
+      </div>
+      
+    </div> 
   </div>
 </body>
 
 <script type="text/javascript">
+    // override post form default behavior on submit
+    window.onload = function() { 
+        document.getElementById("search-form").onsubmit = function() { 
+            submitForm();
+            return false;
+        };
+    };
+
+  // get location
   // based on this tutorial: http://www.html5hacks.com/blog/2012/10/15/use-the-geolocation-api-to-display-long-slash-lat-in-a-jquery-mobile-app/
   $(function () {
-    if (navigator.location) {
-      
+    if (navigator.geolocation) {
+      document.getElementById("location-pending-msg").style.display = "block";
+      navigator.geolocation.getCurrentPosition(locationSuccess, locationError, {timeout: 10000});
+    } else {
+      console.log("navigator.geolocation is undefined.");
+      locationError();
     }
-  })
+    
+    function locationSuccess(location) {
+      document.getElementById("latitude-field").value = location.coords.latitude;
+      document.getElementById("longitude-field").value = location.coords.longitude;
+      document.getElementById("location-pending-msg").style.display = "none";
+      document.getElementById("search-form").style.display = "block";
+    }
+    
+    function locationError() {
+      document.getElementById("location-error-msg").style.display = "block";
+    }
+    
+  });
+  
+  // bind action to form submit
+  // submit post request to server and parse result
+  function submitForm() {
+    var search_term = document.getElementById("search-term").value;
+    var latitude = document.getElementById("latitude-field").value;
+    var longitude = document.getElementById("longitude-field").value;
+    var postParams = "latitude=" + latitude + "&longitude=" + longitude + "&search_term=" + search_term;
+    if (!(search_term.match(/^[a-zA-Z\s]+$/))) {
+      document.getElementById("validation-error-msg").style.display = "block";
+    } else {
+      document.getElementById("validation-error-msg").style.display = "none";
+      // make ajax request
+      $.ajax({
+        type: "POST",
+        url: "/mobile/factual",
+        data: postParams,
+        success: function (result) {
+          // console.log(result);
+          showRestaurants($.parseJSON(result));
+        }
+      })
+    }
+  }
+  
+  function showRestaurants(result) {
+    if (result.length == 0) {
+      document.getElementById("none-found-error-msg").style.display = "block";
+    } else {
+      document.getElementById("result-list").innerHTML = "";
+      document.getElementById("none-found-error-msg").style.display = "none";
+      for (var i = 0; i < result.length; i++) {
+        // parse factual api results
+        next_result = result[i];
+
+        var name = next_result.name;
+        var address = next_result.address;
+        var phone = next_result.tel;
+        var website = next_result.website;
+        
+        var list_el = "<li>" + "<b>" + name + "</b><br>" + 
+          address + "<br>" + 
+          phone + "<br>" + 
+          "<button data-theme='a'><a href='" + name + " " + website + "'>Website</a></button>" + "</li><br>";
+        
+        document.getElementById("result-list").innerHTML += list_el;
+      } 
+      document.getElementById("result-list").style.display = "block";
+    }
+  }
 </script>

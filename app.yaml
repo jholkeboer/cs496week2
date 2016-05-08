@@ -11,6 +11,10 @@ application: my-recipe-tracker
 
 # Handlers define how to route requests to your application.
 handlers:
+- url: /mobile/.*
+  script: main.app
+  login: optional
+  secure: always
 
 # App Engine serves and caches static files contained in the listed directories
 # (and subdirectories). Uncomment and set the directory as needed.
@@ -36,3 +40,6 @@ handlers:
 libraries:
 - name: setuptools
   version: "0.6c11"
+  
+env_variables:
+  GAE_USE_SOCKETS_HTTPLIB : 'anyvalue'

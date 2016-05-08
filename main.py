@@ -39,26 +39,23 @@ factual = Factual(api_key, api_secret)
 
 # route to hit Factual api
 # based on Factual documentation: https://github.com/Factual/factual-python-driver
-@app.route('/mobile/factual')
+@app.route('/mobile/factual', methods=['POST'])
 def factual_restaurants():
-    if not request.args.get('latitude') or not request.args.get('longitude'):
+    latitude = float(request.form.get('latitude'))
+    longitude = float(request.form.get('longitude'))
+    search_term = request.form.get('search_term')
+    if not latitude or not longitude:
         return json.dumps({"error": "No location provided"}), 500
-    if not request.args.get('search_term'):
+    if not search_term:
         return json.dumps({"error": "No search term provided"}), 500
-    latitude = request.args.get('latitude')
-    longitude = request.args.get('longitude')
-    search_term = request.args.get('search_term')
     
-    # dummy data
-    latitude = 34.058583
-    longitude = -118.416582
     radius = 1000
-    search_term = 'coffee'
     
     places = factual.table('places')
     
     # look up restaurants near location
     result = places.search(search_term).geo(circle(latitude, longitude, radius)).data()
+    return json.dumps(result), 200
 
 # route to display JQuery mobile page
 @app.route('/mobile/home', methods=['GET'])
